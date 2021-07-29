@@ -5,7 +5,7 @@ ipaddr_prefix_escaped=`echo $ipaddr_prefix | sed 's/\./\\\./g'`
 ipaddr=`ifconfig | sed -n -E 's/^[[:space:]]+inet ('"$ipaddr_prefix_escaped"'[[:digit:]]{1,3}\.[[:digit:]]{1,3}) .*/\1/p'`
 
 # two arguments should always be present
-if [ -z $1 ] || [ -z $2 ]; then
+if [ -z "$1" ] || [ -z "$2" ]; then
 	script=`basename $0`
 	echo "usage: $script send <file>"
 	echo "       $script get  <ip_addr>"
@@ -25,7 +25,7 @@ if [ "$action" = "send" ]; then
 	file_tx=$2
 	file_tx_basename=`basename $2`
 
-	if [ ! -r $file_tx ]; then
+	if [ ! -r "$file_tx" ]; then
 		echo "error reading file $file_tx"
 		exit 1
 	fi
