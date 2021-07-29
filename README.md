@@ -14,7 +14,7 @@ ln -s ~/airship/airship.sh airship
 Make sure to add ~/bin to the end of your `$PATH` environmental variable.
 
 ## Usage
-There are basically to subcommands:
+There are basically two subcommands:
 ```
 airship send my-file.png
 airship get  192.168.0.8
