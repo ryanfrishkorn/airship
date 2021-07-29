@@ -31,12 +31,10 @@ if [ "$action" = "send" ]; then
 	fi
 
 	cmd_tx="nc -l $port < \"$file_tx\""
-	cmd_rx="nc $ipaddr $port > \"$file_tx_basename\""
+	cmd_rx="airship get $ipaddr"
 	cmd_negotiate="echo \"$file_tx_basename\" | nc -l $port"
 
-	echo "send command: $cmd_tx"
 	echo "receive command: $cmd_rx"
-	echo "negotiate command: $cmd_negotiate"
 	
 	# file name negotiation
 	echo -n "negotiating on port $port..."
