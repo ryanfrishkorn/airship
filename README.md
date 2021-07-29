@@ -20,4 +20,4 @@ airship get  192.168.0.8
 If you attempt to get a filename that already exists on the system, the script will abort rather than overwrite. Delete your **own** data, please.
 
 ## Caution
-This is a minimalist script that relies entirely on `BASH` and `netcat`. The goal is to be as simple and painless as possible, but that comes with certain compromises. **All data is unencrypted.** The filename is negotiated by sending it on the first transfer. If we had to type port numbers and filenames, it would defeat the purpose. The script is not designed to check or escape filenames yet, so avoid using complex filenames. This can be improved later.
+This is a minimalist script that relies entirely on `BASH` and `netcat`. The goal is to be as simple and painless as possible, but that comes with certain compromises. **ALL DATA IS UNENCRYPTED!** The filename is negotiated by sending it on the first transfer. If we had to type port numbers and filenames, it would defeat the purpose. The script is not designed to check or escape filenames yet, so avoid using complex filenames. This can be improved later.
