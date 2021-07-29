@@ -4,8 +4,8 @@ ipaddr_prefix="192.168."
 ipaddr_prefix_escaped=`echo $ipaddr_prefix | sed 's/\./\\\./g'`
 ipaddr=`ifconfig | sed -n -E 's/^[[:space:]]+inet ('"$ipaddr_prefix_escaped"'[[:digit:]]{1,3}\.[[:digit:]]{1,3}) .*/\1/p'`
 
-# handle arguments
-if [ -z $1 ]; then
+# two arguments should always be present
+if [ -z $1 ] || [ -z $2 ]; then
 	script=`basename $0`
 	echo "usage: $script send <file>"
 	echo "       $script get  <ip_addr>"
@@ -83,4 +83,9 @@ if [ "$action" = "get" ]; then
 	cmd_rx="nc $ipaddr_remote $port > \"$file_rx\""
 	# get the file
 	eval "$cmd_rx"
+	if [ $? = 0 ]; then
+		echo "success"
+	else
+		echo "fail"
+	fi
 fi
