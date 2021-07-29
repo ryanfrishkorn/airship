@@ -73,7 +73,7 @@ if [ "$action" = "get" ]; then
 		exit 1
 	fi
 
-	echo "writing to \"$file_rx\"..."
+	echo -n "writing to \"$file_rx\"..."
 	# do not overwrite existing files
 	if [ -f "$file_rx" ]; then
 		echo "file already exists, aborting"
