@@ -23,7 +23,7 @@ fi
 
 if [ "$action" = "send" ]; then
 	file_tx=$2
-	file_tx_basename=`basename $2`
+	file_tx_basename=`basename "$2"`
 
 	if [ ! -r "$file_tx" ]; then
 		echo "error reading file $file_tx"
