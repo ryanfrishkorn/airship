@@ -4,20 +4,24 @@ ipaddr_prefix="192.168."
 ipaddr_prefix_escaped=`echo $ipaddr_prefix | sed 's/\./\\\./g'`
 ipaddr=`ifconfig | sed -n -E 's/^[[:space:]]+inet ('"$ipaddr_prefix_escaped"'[[:digit:]]{1,3}\.[[:digit:]]{1,3}) .*/\1/p'`
 
-# two arguments should always be present
-if [ -z "$1" ] || [ -z "$2" ]; then
+usage () {
 	script=`basename $0`
 	echo "usage: $script send <file>"
 	echo "       $script get  <ip_addr>"
-	exit 1
+	echo "       $script key  <import|export|generate>"
+	exit
+}
+
+# two arguments should always be present
+if [ -z "$1" ] || [ -z "$2" ]; then
+	usage
 fi
 
 action=$1
 
-# check actions
-if [ "$action" != "send" ] && [ "$action" != "get" ]; then
-	echo "acceptable actions are: send, get"
-	exit 1
+# check for valid action
+if [ -z $(echo $action | sed -n -E 's/^(send|get|key)$/&/p') ]; then
+	usage
 fi
 
 generate_key () {
