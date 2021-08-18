@@ -2,6 +2,10 @@
 ### Simple BASH script to mimic the functionality of AirDrop using netcat. This is useful when admins install weird security software that screws up your workflow.
 ![airship](https://github.com/ryanfrishkorn/airship/blob/master/assets/airship.jpg?raw=true)
 
+## Requirements
+- netcat (Ubuntu needs netcat-traditional package, MacOS is preinstalled)
+- ccrypt (widely available)
+
 ## Installation
 I usually create a `bin` directory within `$HOME`. Clone the repository somewhere out of the way, and make a symlink with the name of your choosing.
 
