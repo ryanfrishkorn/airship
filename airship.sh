@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 port=7777
 key_file="${HOME}/.airship-key"
 ipaddr_prefix="192.168."
