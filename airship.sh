@@ -20,7 +20,6 @@ if [ -z "$1" ] || [ -z "$2" ]; then
 fi
 
 action=$1
-subaction=$2
 
 # check for valid action
 if [ -z $(echo $action | sed -n -E 's/^(send|get|key)$/&/p') ]; then
@@ -80,7 +79,7 @@ if [ "$action" = "key" ]; then
 
 	# generate new key and write if no key file is present
 	# otherwise, confirm via prompt
-	if [ "$subaction" = "generate" ]; then
+	if [ "$2" = "generate" ]; then
 		echo -n "generating new key..."
 		key=$(generate_key)
 		echo "done"
@@ -89,12 +88,12 @@ if [ "$action" = "key" ]; then
 		write_key $key
 	fi
 
-	if [ "$subaction" = "export" ]; then
+	if [ "$2" = "export" ]; then
 		echo $(read_key)
 		exit
 	fi
 	
-	if [ "$subaction" = "import" ]; then
+	if [ "$2" = "import" ]; then
 		echo -n "enter key: "
 		read key
 		echo -n "writing ${key_file}..."
