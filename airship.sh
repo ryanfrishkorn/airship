@@ -192,6 +192,10 @@ if [ "$action" = "get" ]; then
 
 	cmd_rx="nc $ipaddr_remote $port > \"$file_rx\""
 	cmd_rx_cc="nc $ipaddr_remote $port | ccrypt -d -k \"$key_file\" > \"$file_rx\""
+
+	# sleep after name negotiate to be sure sender is ready
+	sleep 1
+
 	# get the file
 	if [ $encryption = "true" ]; then
 		eval "$cmd_rx_cc"
