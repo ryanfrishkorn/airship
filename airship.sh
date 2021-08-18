@@ -20,6 +20,27 @@ if [ "$action" != "send" ] && [ "$action" != "get" ]; then
 	exit 1
 fi
 
+generate_key () {
+	local key=""
+	until [ ${#key} -eq 16 ]; do
+		local c=$(head -c 1 /dev/urandom | sed -n -e 's/[a-zA-Z0-9]/&/p' 2>/dev/null)
+		if [ -n $c ]; then
+			# append matching character
+			key="${key}${c}"
+		fi
+	done
+
+	echo $key
+}
+
+# verify and prepare ccrypt keys
+if [ ! -f "${HOME}/.airship-key" ]; then
+	echo -n "generating new airship key..."
+	# generate 16 digit key
+	key="$(generate_key)"
+	echo "done"
+	echo "new key: $key"
+fi
 
 if [ "$action" = "send" ]; then
 	file_tx=$2
