@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 port=7777
+encryption=false
 key_file="${HOME}/.airship-key"
 ipaddr_prefix="192.168."
 ipaddr_prefix_escaped=`echo $ipaddr_prefix | sed 's/\./\\\./g'`
@@ -24,6 +25,11 @@ subaction=$2
 # check for valid action
 if [ -z $(echo $action | sed -n -E 's/^(send|get|key)$/&/p') ]; then
 	usage
+fi
+
+# enable encryption if airship key is present
+if [ -f \"$key_file\" ]; then
+	encryption=true
 fi
 
 generate_key () {
@@ -69,8 +75,6 @@ read_key () {
 	fi
 }
 
-# TODO - check for presence of subaction
-
 # handle keys first since they affect how all other actions operate
 if [ "$action" = "key" ]; then
 
@@ -111,15 +115,21 @@ if [ "$action" = "send" ]; then
 	fi
 
 	cmd_tx="nc -l $port < \"$file_tx\""
+	cmd_tx_cc="cat \"$file_tx\" | ccrypt -e -k \"$key_file\" | nc -l $port"
 	cmd_rx="airship get $ipaddr"
 	cmd_negotiate="echo \"$file_tx_basename\" | nc -l $port"
+	cmd_negotiate_cc="echo \"$file_tx_basename\" | ccrypt -e -k \"$key_file\" | nc -l $port"
 
 	echo "receive command: $cmd_rx"
 	
 	# file name negotiation
 	echo -n "negotiating on port $port..."
 	# execute nc to give filename
-	eval "$cmd_negotiate"
+	if [ $encryption = "true" ]; then
+		eval "$cmd_negotiate_cc"
+	else
+		eval "$cmd_negotiate"
+	fi
 
 	if [ $? = 0 ]; then
 		echo "success"
@@ -131,7 +141,11 @@ if [ "$action" = "send" ]; then
 	# file transfer
 	echo -n "listening on port $port..."
 	# execute nc to send
-	eval "$cmd_tx"
+	if [ $encryption = "true" ]; then
+		eval "$cmd_tx_cc"
+	else
+		eval "$cmd_tx"
+	fi
 
 	if [ $? = 0 ]; then
 		echo "sent"
@@ -143,9 +157,16 @@ fi
 
 if [ "$action" = "get" ]; then
 	ipaddr_remote=$2
-	echo -n "negotiating with $ipaddr_remote on port $port..."
+	echo "negotiating with $ipaddr_remote on port $port..."
 	cmd_negotiate="nc $ipaddr_remote $port"
-	file_rx=`$cmd_negotiate`
+	cmd_negotiate_cc="nc $ipaddr_remote $port | ccrypt -d -k \"$key_file\""
+	# negotiate file name
+	if [ $encryption = "true" ]; then
+		file_rx=`eval $cmd_negotiate_cc`
+	else
+		file_rx=`eval $cmd_negotiate`
+	fi
+
 	if [ $? = 0 ]; then
 		echo "success"
 	else
@@ -161,8 +182,14 @@ if [ "$action" = "get" ]; then
 	fi
 
 	cmd_rx="nc $ipaddr_remote $port > \"$file_rx\""
+	cmd_rx_cc="nc $ipaddr_remote $port | ccrypt -d -k \"$key_file\" > \"$file_rx\""
 	# get the file
-	eval "$cmd_rx"
+	if [ $encryption = "true" ]; then
+		eval "$cmd_rx_cc"
+	else
+		eval "$cmd_rx"
+	fi
+
 	if [ $? = 0 ]; then
 		echo "success"
 	else
