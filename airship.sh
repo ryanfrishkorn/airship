@@ -57,6 +57,12 @@ read_key () {
 	fi
 }
 
+check_key () {
+	if [ ! -f "$key_file" ]; then
+		echo "WARNING: Key file is missing. Transfers will be in plaintext!"
+	fi
+}
+
 # two arguments should always be present
 if [ -z "$1" ] || [ -z "$2" ]; then
 	usage
@@ -108,6 +114,9 @@ fi
 if [ "$action" = "send" ]; then
 	file_tx=$2
 	file_tx_basename=`basename "$2"`
+
+	# check for encryption key and generate warning
+	check_key
 
 	if [ ! -r "$file_tx" ]; then
 		echo "error reading file $file_tx"
