@@ -14,23 +14,6 @@ usage () {
 	exit
 }
 
-# two arguments should always be present
-if [ -z "$1" ] || [ -z "$2" ]; then
-	usage
-fi
-
-action=$1
-
-# check for valid action
-if [ -z $(echo $action | sed -n -E 's/^(send|get|key)$/&/p') ]; then
-	usage
-fi
-
-# enable encryption if airship key is present
-if [ -f \"$key_file\" ]; then
-	encryption=true
-fi
-
 generate_key () {
 	local key=""
 	until [ ${#key} -eq 16 ]; do
@@ -73,6 +56,24 @@ read_key () {
 		echo $(head -n 1 "$key_file")
 	fi
 }
+
+# two arguments should always be present
+if [ -z "$1" ] || [ -z "$2" ]; then
+	usage
+fi
+
+# assign main action
+action=$1
+
+# check for valid action
+if [ -z $(echo $action | sed -n -E 's/^(send|get|key)$/&/p') ]; then
+	usage
+fi
+
+# enable encryption if airship key is present
+if [ -f \"$key_file\" ]; then
+	encryption=true
+fi
 
 # handle keys first since they affect how all other actions operate
 if [ "$action" = "key" ]; then
