@@ -3,11 +3,11 @@ port=7777
 encryption=false
 key_file="${HOME}/.airship-key"
 ipaddr_prefix="192.168."
-ipaddr_prefix_escaped=`echo $ipaddr_prefix | sed 's/\./\\\./g'`
-ipaddr=`ifconfig | sed -n -E 's/^[[:space:]]+inet ('"$ipaddr_prefix_escaped"'[[:digit:]]{1,3}\.[[:digit:]]{1,3}) .*/\1/p'`
+ipaddr_prefix_escaped=${ipaddr_prefix//\./\\\.}
+ipaddr=$(ifconfig | sed -n -E 's/^[[:space:]]+inet ('"$ipaddr_prefix_escaped"'[[:digit:]]{1,3}\.[[:digit:]]{1,3}) .*/\1/p')
 
 usage () {
-	script=`basename $0`
+	script=$(basename "$0")
 	echo "usage: $script send <file>"
 	echo "       $script get  <ip_addr>"
 	echo "       $script key  <import|export|generate>"
@@ -17,14 +17,15 @@ usage () {
 generate_key () {
 	local key=""
 	until [ ${#key} -eq 16 ]; do
-		local c=$(head -c 1 /dev/urandom | sed -n -e 's/[a-zA-Z0-9]/&/p' 2>/dev/null)
-		if [ -n $c ]; then
+		local c
+		c=$(head -c 1 /dev/urandom | sed -n -e 's/[a-zA-Z0-9]/&/p' 2>/dev/null)
+		if [ -n "$c" ]; then
 			# append matching character
 			key="${key}${c}"
 		fi
 	done
 
-	echo $key
+	echo "$key"
 }
 
 write_key () {
@@ -33,17 +34,18 @@ write_key () {
 	if [ -f "$key_file" ]; then
 		# prompt for overwrite if file exists
 		echo -n "$key_file exists. Overwrite? [y/N] "
-		read answer
+		read -r answer
 
 		# check with regex
-		if [ -z "$(echo $answer | sed -n -E 's/^y$/&/ip')" ]; then
+		# TODO check parsing
+		if [ -z "$(echo \\"$answer\\" | sed -n -E 's/^y$/&/ip')" ]; then
 			# negative confirmation - exit function
 			return 1
 		fi
 	fi
 
 	echo -n "writing ${key_file}..."
-	echo "$key" > $key_file
+	echo "$key" > "$key_file"
 	echo "done"
 }
 
@@ -53,7 +55,7 @@ read_key () {
 		echo "$key_file missing. run \"key generate\" for encrypted transfers."
 		exit 1
 	else
-		echo $(head -n 1 "$key_file")
+		head -n 1 "$key_file"
 	fi
 }
 
@@ -72,12 +74,12 @@ fi
 action=$1
 
 # check for valid action
-if [ -z $(echo $action | sed -n -E 's/^(send|get|key)$/&/p') ]; then
+if [ -z "$(echo "$action" | sed -n -E 's/^(send|get|key)$/&/p')" ]; then
 	usage
 fi
 
 # enable encryption if airship key is present
-if [ -f \"$key_file\" ]; then
+if [ -f "$key_file" ]; then
 	encryption=true
 fi
 
@@ -92,19 +94,19 @@ if [ "$action" = "key" ]; then
 		echo "done"
 		
 		# file checks handled within function
-		write_key $key
+		write_key "$key"
 	fi
 
 	if [ "$2" = "export" ]; then
-		echo $(read_key)
+		"$(read_key)"
 		exit
 	fi
 	
 	if [ "$2" = "import" ]; then
 		echo -n "enter key: "
-		read key
+		read -r key
 		echo -n "writing ${key_file}..."
-		write_key $key
+		write_key "$key"
 		echo "done"
 	fi
 
@@ -113,7 +115,7 @@ fi
 
 if [ "$action" = "send" ]; then
 	file_tx=$2
-	file_tx_basename=`basename "$2"`
+	file_tx_basename=$(basename "$2")
 
 	# check for encryption key and generate warning
 	check_key
@@ -123,43 +125,35 @@ if [ "$action" = "send" ]; then
 		exit 1
 	fi
 
-	cmd_tx="nc -l $port < \"$file_tx\""
-	cmd_tx_cc="cat \"$file_tx\" | ccrypt -e -k \"$key_file\" | nc -l $port"
+	if [ $encryption = "true" ]; then
+		cmd_tx="cat \"$file_tx\" | ccrypt -e -k \"$key_file\" | nc -l $port"
+		cmd_negotiate="echo \"$file_tx_basename\" | ccrypt -e -k \"$key_file\" | nc -l $port"
+	else
+		cmd_tx="nc -l $port < \"$file_tx\""
+		cmd_negotiate="echo \"$file_tx_basename\" | nc -l $port"
+	fi
+	# for human suggestion
 	cmd_rx="airship get $ipaddr"
-	cmd_negotiate="echo \"$file_tx_basename\" | nc -l $port"
-	cmd_negotiate_cc="echo \"$file_tx_basename\" | ccrypt -e -k \"$key_file\" | nc -l $port"
 
 	echo "receive command: $cmd_rx"
 	
 	# file name negotiation
 	echo -n "negotiating on port $port..."
+	
 	# execute nc to give filename
-	if [ $encryption = "true" ]; then
-		eval "$cmd_negotiate_cc"
-	else
-		eval "$cmd_negotiate"
-	fi
-
-	if [ $? = 0 ]; then
+	if eval "$cmd_negotiate"; then
 		echo "success"
 	else
-		echo "failed"
+		echo "failure"
 		exit 1
 	fi
 
-	# file transfer
+	# execute nc for file transfer
 	echo -n "listening on port $port..."
-	# execute nc to send
-	if [ $encryption = "true" ]; then
-		eval "$cmd_tx_cc"
-	else
-		eval "$cmd_tx"
-	fi
-
-	if [ $? = 0 ]; then
+	if eval "$cmd_tx"; then
 		echo "sent"
 	else
-		echo "error"
+		echo "failure"
 		exit 1
 	fi
 fi
@@ -167,19 +161,16 @@ fi
 if [ "$action" = "get" ]; then
 	ipaddr_remote=$2
 	echo "negotiating with $ipaddr_remote on port $port..."
-	cmd_negotiate="nc $ipaddr_remote $port"
-	cmd_negotiate_cc="nc $ipaddr_remote $port | ccrypt -d -k \"$key_file\""
-	# negotiate file name
 	if [ $encryption = "true" ]; then
-		file_rx=`eval $cmd_negotiate_cc`
+		cmd_negotiate="nc $ipaddr_remote $port | ccrypt -d -k \"$key_file\""
 	else
-		file_rx=`eval $cmd_negotiate`
+		cmd_negotiate="nc $ipaddr_remote $port"
 	fi
-
-	if [ $? = 0 ]; then
+	# negotiate file name
+	if file_rx=$(eval "$cmd_negotiate"); then
 		echo "success"
 	else
-		echo "fail"
+		echo "failure"
 		exit 1
 	fi
 
@@ -190,22 +181,20 @@ if [ "$action" = "get" ]; then
 		exit 1
 	fi
 
-	cmd_rx="nc $ipaddr_remote $port > \"$file_rx\""
-	cmd_rx_cc="nc $ipaddr_remote $port | ccrypt -d -k \"$key_file\" > \"$file_rx\""
+	if [ $encryption = "true" ]; then
+		cmd_rx="nc $ipaddr_remote $port | ccrypt -d -k \"$key_file\" > \"$file_rx\""
+	else
+		cmd_rx="nc $ipaddr_remote $port > \"$file_rx\""
+	fi
 
 	# sleep after name negotiate to be sure sender is ready
 	sleep 1
 
 	# get the file
-	if [ $encryption = "true" ]; then
-		eval "$cmd_rx_cc"
-	else
-		eval "$cmd_rx"
-	fi
-
-	if [ $? = 0 ]; then
+	if eval "$cmd_rx"; then
 		echo "success"
 	else
-		echo "fail"
+		echo "failure"
+		exit 1
 	fi
 fi
