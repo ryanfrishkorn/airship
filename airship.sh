@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 port=7777
 encryption=false
-key_file="${HOME}/.airship-key"
+key_file="${HOME}/.airship"
 ipaddr_prefix="192.168."
 ipaddr_prefix_escaped=${ipaddr_prefix//\./\\\.}
 ipaddr=$(ifconfig | sed -n -E 's/^[[:space:]]+inet ('"$ipaddr_prefix_escaped"'[[:digit:]]{1,3}\.[[:digit:]]{1,3}) .*/\1/p')
