@@ -98,7 +98,7 @@ if [ "$action" = "key" ]; then
 	fi
 
 	if [ "$2" = "export" ]; then
-		"$(read_key)"
+		read_key
 		exit
 	fi
 	
