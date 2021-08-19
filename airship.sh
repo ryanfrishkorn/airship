@@ -38,8 +38,9 @@ write_key () {
 
 		# check with regex
 		# TODO check parsing
-		if [ -z "$(echo \\"$answer\\" | sed -n -E 's/^y$/&/ip')" ]; then
+		if [ -z "$(echo "$answer" | sed -n -E 's/^y$/&/ip')" ]; then
 			# negative confirmation - exit function
+			echo "aborted"
 			return 1
 		fi
 	fi
@@ -103,7 +104,7 @@ if [ "$action" = "key" ]; then
 	fi
 	
 	if [ "$2" = "import" ]; then
-		echo -n "enter key: "
+		echo -n "Enter key: "
 		read -r key
 		echo -n "writing ${key_file}..."
 		write_key "$key"
