@@ -161,27 +161,28 @@ fi
 
 if [ "$action" = "get" ]; then
 	ipaddr_remote=$2
-	echo "negotiating with $ipaddr_remote on port $port..."
+	echo -n "negotiating with $ipaddr_remote on port $port..."
 	if [ $encryption = "true" ]; then
 		cmd_negotiate="nc $ipaddr_remote $port | ccrypt -d -k \"$key_file\""
 	else
 		cmd_negotiate="nc $ipaddr_remote $port"
 	fi
 	# negotiate file name
-	if file_rx=$(eval "$cmd_negotiate"); then
-		echo "success"
-	else
+	file_rx=$(eval "$cmd_negotiate")
+	if [ -z "$file_rx" ]; then
 		echo "failure"
 		exit 1
+	else
+		echo "success"
 	fi
 
-	echo -n "writing to \"$file_rx\"..."
 	# do not overwrite existing files
 	if [ -f "$file_rx" ]; then
-		echo "file already exists, aborting"
+		echo "$file_rx exists locally, aborting"
 		exit 1
 	fi
-
+	
+	echo -n "writing to \"$file_rx\"..."
 	if [ $encryption = "true" ]; then
 		cmd_rx="nc $ipaddr_remote $port | ccrypt -d -k \"$key_file\" > \"$file_rx\""
 	else
