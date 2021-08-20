@@ -1,10 +1,11 @@
 # Airship
-### Simple BASH scripts to mimic the functionality of AirDrop using netcat. This is useful when admins install weird security software that screws up your workflow.
+
+### Simple BASH script to mimic the functionality of AirDrop using netcat. This is useful when admins install weird security software that screws up your workflow.
 
 ![airship](https://github.com/ryanfrishkorn/airship/blob/master/assets/airship.jpg?raw=true)
 
 ## Requirements
-- netcat (Ubuntu needs netcat-traditional package, MacOS is preinstalled)
+- netcat (MacOS is preinstalled)
 - ccrypt (widely available)
 
 ## Installation
@@ -18,12 +19,22 @@ ln -s ~/airship/airship.sh airship
 Make sure to add ~/bin to the end of your `$PATH` environmental variable.
 
 ## Usage
-There are basically two subcommands:
+There are two main subcommands:
 ```
 airship send my-file.png
 airship get  192.168.0.8
 ```
+
+There is also a key management subcommand:
+```
+airship key generate
+airship key import
+airship key export
+```
+
+Note that machines must have matching keys in order to properly decrypt.
+
 If you attempt to get a filename that already exists on the system, the script will abort rather than overwrite. Delete your **own** data, please.
 
 ## Caution
-This is a minimalist script that relies entirely on `BASH` and `netcat`. The goal is to be as simple and painless as possible, but that comes with certain compromises. **ALL DATA IS UNENCRYPTED!** The filename is negotiated by sending it on the first transfer. If we had to type port numbers and filenames, it would defeat the purpose. The script is not designed to check or escape filenames yet, so avoid using complex filenames. This can be improved later.
+This is a minimalist script that relies on `BASH`, `netcat`, and `ccrypt` for optional encryption. The goal is to be as simple and painless as possible, but that comes with certain compromises. The filename is negotiated by sending it on the first transfer.
