@@ -2,9 +2,6 @@
 port=7777
 encryption=false
 key_file="${HOME}/.airship"
-ipaddr_prefix="192.168."
-ipaddr_prefix_escaped=${ipaddr_prefix//\./\\\.}
-ipaddr=$(ifconfig | sed -n -E 's/^[[:space:]]+inet ('"$ipaddr_prefix_escaped"'[[:digit:]]{1,3}\.[[:digit:]]{1,3}) .*/\1/p')
 
 usage () {
 	script=$(basename "$0")
@@ -12,6 +9,15 @@ usage () {
 	echo "       $script get  <ip_addr>"
 	echo "       $script key  <import|export|generate>"
 	exit
+}
+
+get_current_ips () {
+	local pattern
+	local ips
+
+	pattern='^[[:space:]]+inet ([[:digit:]]{1,3}\.[[:digit:]]{1,3}\.[[:digit:]]{1,3}\.[[:digit:]]{1,3}) .*'
+	ips=$(ifconfig | sed -n -E 's/'"${pattern}"'/\1/p' | tr "\n" " " | sed 's/ $//')
+	printf "%s" "${ips}"
 }
 
 generate_key () {
@@ -134,9 +140,7 @@ if [[ "$action" = "send" ]]; then
 		cmd_negotiate="echo \"$file_tx_basename\" | nc -l $port"
 	fi
 	# for human suggestion
-	cmd_rx="airship get $ipaddr"
-
-	echo "receive command: $cmd_rx"
+	printf "receive command: airship get (%s)\n" "$(get_current_ips | tr " " "|")"
 	
 	# file name negotiation
 	echo -n "negotiating on port $port..."
