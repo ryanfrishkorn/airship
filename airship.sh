@@ -16,10 +16,10 @@ usage () {
 
 generate_key () {
 	local key=""
-	until [ ${#key} -eq 16 ]; do
+	until [[ ${#key} -eq 16 ]]; do
 		local c
 		c=$(head -c 1 /dev/urandom | sed -n -e 's/[a-zA-Z0-9]/&/p' 2>/dev/null)
-		if [ -n "$c" ]; then
+		if [[ -n "$c" ]]; then
 			# append matching character
 			key="${key}${c}"
 		fi
@@ -31,14 +31,14 @@ generate_key () {
 write_key () {
 	local key=$1
 	
-	if [ -f "$key_file" ]; then
+	if [[ -f "$key_file" ]]; then
 		# prompt for overwrite if file exists
 		echo -n "$key_file exists. Overwrite? [y/N] "
 		read -r answer
 
 		# check with regex
 		# TODO check parsing
-		if [ -z "$(echo "$answer" | sed -n -E 's/^y$/&/ip')" ]; then
+		if [[ -z "$(echo "$answer" | sed -n -E 's/^y$/&/ip')" ]]; then
 			# negative confirmation - exit function
 			echo "aborted"
 			return 1
@@ -52,7 +52,7 @@ write_key () {
 
 read_key () {
 	local key=""
-	if [ ! -f "$key_file" ]; then
+	if [[ ! -f "$key_file" ]]; then
 		echo "$key_file missing. run \"key generate\" for encrypted transfers."
 		exit 1
 	else
@@ -61,13 +61,13 @@ read_key () {
 }
 
 check_key () {
-	if [ ! -f "$key_file" ]; then
+	if [[ ! -f "$key_file" ]]; then
 		echo "WARNING: Key file is missing. Transfers will be in plaintext!"
 	fi
 }
 
 # two arguments should always be present
-if [ -z "$1" ] || [ -z "$2" ]; then
+if [[ -z "$1" ]] || [[ -z "$2" ]]; then
 	usage
 fi
 
@@ -75,21 +75,21 @@ fi
 action=$1
 
 # check for valid action
-if [ -z "$(echo "$action" | sed -n -E 's/^(send|get|key)$/&/p')" ]; then
+if [[ -z "$(echo "$action" | sed -n -E 's/^(send|get|key)$/&/p')" ]]; then
 	usage
 fi
 
 # enable encryption if airship key is present
-if [ -f "$key_file" ]; then
+if [[ -f "$key_file" ]]; then
 	encryption=true
 fi
 
 # handle keys first since they affect how all other actions operate
-if [ "$action" = "key" ]; then
+if [[ "$action" = "key" ]]; then
 
 	# generate new key and write if no key file is present
 	# otherwise, confirm via prompt
-	if [ "$2" = "generate" ]; then
+	if [[ "$2" = "generate" ]]; then
 		echo -n "generating new key..."
 		key=$(generate_key)
 		echo "done"
@@ -98,12 +98,12 @@ if [ "$action" = "key" ]; then
 		write_key "$key"
 	fi
 
-	if [ "$2" = "export" ]; then
+	if [[ "$2" = "export" ]]; then
 		read_key
 		exit
 	fi
 	
-	if [ "$2" = "import" ]; then
+	if [[ "$2" = "import" ]]; then
 		echo -n "Enter key: "
 		read -r key
 		echo -n "writing ${key_file}..."
@@ -114,19 +114,19 @@ if [ "$action" = "key" ]; then
 	exit
 fi
 
-if [ "$action" = "send" ]; then
+if [[ "$action" = "send" ]]; then
 	file_tx=$2
 	file_tx_basename=$(basename "$2")
 
 	# check for encryption key and generate warning
 	check_key
 
-	if [ ! -r "$file_tx" ]; then
+	if [[ ! -r "$file_tx" ]]; then
 		echo "error reading file $file_tx"
 		exit 1
 	fi
 
-	if [ $encryption = "true" ]; then
+	if [[ $encryption = "true" ]]; then
 		cmd_tx="cat \"$file_tx\" | ccrypt -e -k \"$key_file\" | nc -l $port"
 		cmd_negotiate="echo \"$file_tx_basename\" | ccrypt -e -k \"$key_file\" | nc -l $port"
 	else
@@ -159,17 +159,17 @@ if [ "$action" = "send" ]; then
 	fi
 fi
 
-if [ "$action" = "get" ]; then
+if [[ "$action" = "get" ]]; then
 	ipaddr_remote=$2
 	echo -n "negotiating with $ipaddr_remote on port $port..."
-	if [ $encryption = "true" ]; then
+	if [[ $encryption = "true" ]]; then
 		cmd_negotiate="nc $ipaddr_remote $port | ccrypt -d -k \"$key_file\""
 	else
 		cmd_negotiate="nc $ipaddr_remote $port"
 	fi
 	# negotiate file name
 	file_rx=$(eval "$cmd_negotiate")
-	if [ -z "$file_rx" ]; then
+	if [[ -z "$file_rx" ]]; then
 		echo "failure"
 		exit 1
 	else
@@ -177,13 +177,13 @@ if [ "$action" = "get" ]; then
 	fi
 
 	# do not overwrite existing files
-	if [ -f "$file_rx" ]; then
+	if [[ -f "$file_rx" ]]; then
 		echo "$file_rx exists locally, aborting"
 		exit 1
 	fi
 	
 	echo -n "writing to \"$file_rx\"..."
-	if [ $encryption = "true" ]; then
+	if [[ $encryption = "true" ]]; then
 		cmd_rx="nc $ipaddr_remote $port | ccrypt -d -k \"$key_file\" > \"$file_rx\""
 	else
 		cmd_rx="nc $ipaddr_remote $port > \"$file_rx\""
